@@ -3,6 +3,11 @@
 with pkgs;
 with lib;
 
+# TODO(akavel): create readonly files in a derivation dir, create links to them from /etc/NetworkManager/system-connections only for those which are already links or nonexistent
+# TODO(akavel): allow settings as in wpa_supplicant branch, but also allow specifying explicit contents of the created files, by some different config option, purely nm-related
+# TODO(akavel): restart NetworkManager service afterwards, or `nmcli con (re)load` ?
+# NOTE(akavel): see `man nm-settings-keyfile`, `man NetworkManager.conf`
+
 let
   cfg = config.networking.networkmanager;
 
@@ -71,6 +76,30 @@ let
     ${optionalString (cfg.insertNameservers != []) "${coreutils}/bin/cat $tmp ${ns cfg.insertNameservers} $tmp.ns > /etc/resolv.conf"}
     ${coreutils}/bin/rm -f $tmp $tmp.ns
   '';
+
+  createWifi = ssid: opt: {
+      # TODO(akavel): allow creating fully customized networks via some additional config option
+      target = "NetworkManager/system-connections/_predefined_${ssid}";
+      source = writeTextFile {
+          destination = "/wifi/";  # some unique dir name
+	  name = ssid;             # have to use something
+	  text = ''
+	    [connection]
+	    type=wifi
+	    id=${ssid}
+	    # TODO(akavel): uuid ?
+
+	    [wifi]
+	    ssid=${ssid}
+
+	    [wifi-security]
+	    auth-alg=open  # TODO(akavel): what's this? needed or not?
+	    ${optionalString (opt.psk != null) ''
+	    key-mgmt=wpa-psk
+	    psk=${opt.psk}''}
+	  '';
+      };
+  };
 
   dispatcherTypesSubdirMap = {
     "basic" = "";
@@ -170,6 +199,37 @@ in {
         '';
       };
     };
+
+    networking.wireless = {
+      # TODO(akavel): delete below option after it's added by wpa_supplicant.nix?
+      networks = mkOption {
+        type = types.attrsOf (types.submodule {
+          options = {
+            psk = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = ''
+                The network's pre-shared key in plaintext defaulting
+                to being a network without any authentication.
+              '';
+            };
+          };
+        });
+        description = ''
+          The network definitions to automatically connect to when
+           <command>wpa_supplicant</command> is running. If this
+           parameter is left empty wpa_supplicant will use
+          /etc/wpa_supplicant.conf as the configuration file.
+        '';
+        default = {};
+        example = literalExample ''
+          echelon = {
+            psk = "abcdefgh";
+          };
+          "free.wifi" = {};
+        '';
+      };
+    };
   };
 
 
@@ -210,6 +270,7 @@ in {
            { source = overrideNameserversScript;
              target = "NetworkManager/dispatcher.d/02overridedns";
            }
+      ++ mapAttrsToList createWifi config.networking.wireless.networks
       ++ lib.imap (i: s: {
         text = s.source;
         target = "NetworkManager/dispatcher.d/${dispatcherTypesSubdirMap.${s.type}}03userscript${lib.fixedWidthNumber 4 i}";

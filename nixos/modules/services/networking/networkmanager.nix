@@ -78,27 +78,24 @@ let
   '';
 
   createWifi = ssid: opt: {
-      # TODO(akavel): allow creating fully customized networks via some additional config option
-      target = "NetworkManager/system-connections/_predefined_${ssid}";
-      source = writeTextFile {
-          destination = "/wifi/";  # some unique dir name
-	  name = ssid;             # have to use something
-	  text = ''
-	    [connection]
-	    type=wifi
-	    id=${ssid}
-	    # TODO(akavel): uuid ?
+    # TODO(akavel): allow creating fully customized networks via some additional config option
+    target = "NetworkManager/system-connections/_predefined_${ssid}";
+    # FIXME(akavel): make the file root-only readable
+    source = writeText ssid ''
+      [connection]
+      type=wifi
+      id=${ssid}
+      # TODO(akavel): uuid ?
 
-	    [wifi]
-	    ssid=${ssid}
+      [wifi]
+      ssid=${ssid}
 
-	    [wifi-security]
-	    auth-alg=open  # TODO(akavel): what's this? needed or not?
-	    ${optionalString (opt.psk != null) ''
-	    key-mgmt=wpa-psk
-	    psk=${opt.psk}''}
-	  '';
-      };
+      [wifi-security]
+      auth-alg=open  # TODO(akavel): what's this? needed or not?
+      ${optionalString (opt.psk != null) ''
+      key-mgmt=wpa-psk
+      psk=${opt.psk}''}
+    '';
   };
 
   dispatcherTypesSubdirMap = {

@@ -94,7 +94,8 @@ let
       ssid=${ssid}
 
       [wifi-security]
-      auth-alg=open  # TODO(akavel): what's this? needed or not?
+      # TODO(akavel): what's auth-alg? needed or not?
+      auth-alg=open
       ${optionalString (opt.psk != null) ''
       key-mgmt=wpa-psk
       psk=${opt.psk}''}

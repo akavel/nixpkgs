@@ -79,9 +79,12 @@ let
 
   createWifi = ssid: opt: {
     # TODO(akavel): allow creating fully customized networks via some additional config option
+    # TODO(akavel): find out how to make sure that user's custom/changed files won't be overridden by those below
     target = "NetworkManager/system-connections/_predefined_${ssid}";
     # FIXME(akavel): make the file root-only readable
-    source = writeText ssid ''
+    # TODO(akavel): in docs, write a security note about using PSK here (that it's visible in *.nix file)
+    mode = "0400";
+    text = ''
       [connection]
       type=wifi
       id=${ssid}

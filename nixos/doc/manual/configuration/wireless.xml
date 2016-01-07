@@ -19,6 +19,7 @@ networking.wireless.enable = true;
 </programlisting>
 
 NixOS lets you specify networks for wpa_supplicant declaratively:
+<example xml:id="ex-wireless-networks">
 <programlisting>
 networking.wireless.networks = {
   echelon = {
@@ -27,6 +28,7 @@ networking.wireless.networks = {
   "free.wifi" = {};
 }
 </programlisting>
+</example>
 
 Be aware that keys will be written to the nix store in plaintext!
 

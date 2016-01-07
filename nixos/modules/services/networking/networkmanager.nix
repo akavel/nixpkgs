@@ -199,38 +199,6 @@ in {
         '';
       };
     };
-
-    networking.wireless = {
-      # TODO(akavel): delete below option after it's added by wpa_supplicant.nix?
-      networks = mkOption {
-        type = types.attrsOf (types.submodule {
-          options = {
-            psk = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = ''
-                The network's pre-shared key in plaintext defaulting
-                to being a network without any authentication.
-              '';
-            };
-          };
-        });
-        description = ''
-          The network definitions to automatically connect to when
-           <command>network-manager</command> is running. If this
-           parameter is left empty network-manager will use
-	   other networks defined in
-	   /etc/NetworkManager/system-connections directory.
-        '';
-        default = {};
-        example = literalExample ''
-          echelon = {
-            psk = "abcdefgh";
-          };
-          "free.wifi" = {};
-        '';
-      };
-    };
   };
 
 
